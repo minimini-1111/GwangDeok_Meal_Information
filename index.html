@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="header">
+  <div class="logo">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#3A2A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-1.5 1-2 1-3.5"/><path d="M12 7c0-1.5 1-2 1-3.5"/><path d="M16 7c0-1.5 1-2 1-3.5"/></svg>
+  </div>
+  <div>
+    <h1 class="title">광덕고 급식 알리미</h1>
+    <span class="muted">오늘 뭐 먹지? 냠냠</span>
+  </div>
+</div>
+
+<div class="date-bar">
+  <a class="arrow" href="{{ url_for('index', date=prev_date, meal=tab) }}" aria-label="전날">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A2A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+  </a>
+  <form method="get" action="{{ url_for('index') }}" class="date-form">
+    <label for="date-pick" class="date-text">{{ date_label }}</label>
+    <input type="date" id="date-pick" name="date" value="{{ date_value }}" onchange="this.form.submit()" aria-label="날짜 고르기">
+  </form>
+  <a class="arrow" href="{{ url_for('index', date=next_date, meal=tab) }}" aria-label="다음날">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A2A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+  </a>
+</div>
+{% if is_today %}
+  <span class="chip" style="align-self:center">오늘</span>
+{% else %}
+  <a class="chip" href="{{ url_for('index') }}" style="align-self:center;color:#3A2A1A;text-decoration:none">오늘로 돌아가기</a>
+{% endif %}
+
+{% if meal is none %}
+  <div class="card"><p class="error">급식 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p></div>
+{% elif not meal %}
+  <div class="card"><span class="jua" style="font-size:22px">오늘은 급식이 없어요</span><span class="muted">주말이나 방학일 수 있어요.</span></div>
+{% else %}
+  <nav class="tabs">
+    {% for name in ["중식", "석식"] if name in meal %}
+      <a href="{{ url_for('index', date=date, meal=name) }}" class="{{ 'on' if name == tab }}">{{ name }}</a>
+    {% endfor %}
+  </nav>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <span class="jua" style="font-size:22px">{{ tab }} 메뉴</span>
+      <span class="muted" style="font-size:13px">{{ meal[tab]["칼로리"] }}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% for menu in meal[tab]["메뉴"] %}
+        <div class="menu-row"><span class="dot"></span>{{ menu }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% if is_today %}
+  <div class="btns">
+    <a class="btn primary" href="{{ url_for('rate', meal=tab) }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1A" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>평가하기</a>
+    <a class="btn" href="{{ url_for('stats') }}">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2A1A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11"/><path d="M12 20V5"/><path d="M19 20v-6"/></svg>통계 보기</a>
+  </div>
+  {% else %}
+  <p class="muted" style="text-align:center;margin:0">평가는 오늘 급식만 할 수 있어요</p>
+  <a class="btn" href="{{ url_for('stats') }}">통계 보기</a>
+  {% endif %}
+{% endif %}
+{% if meal is none or not meal %}
+  <a class="btn" href="{{ url_for('stats') }}">통계 보기</a>
+{% endif %}
+{% endblock %}

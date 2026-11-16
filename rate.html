@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}급식 평가하기{% endblock %}
+{% block content %}
+<div class="header">
+  {% include "_back.html" %}
+  <div>
+    <h1 class="title" style="font-size:24px">오늘 {{ tab }} 어땠어요?</h1>
+    <span class="muted" style="font-size:13px">메뉴마다 별을 눌러 주세요</span>
+  </div>
+</div>
+
+{% if saved %}
+  <div class="success">저장됐어요! 오늘 {{ tab }} 평균 ★ {{ saved }}점</div>
+  <div class="btns">
+    <a class="btn" href="{{ url_for('index') }}">홈으로</a>
+    <a class="btn primary" href="{{ url_for('stats') }}">통계 보기</a>
+  </div>
+{% elif not meal %}
+  <div class="card"><span class="jua" style="font-size:20px">오늘은 평가할 급식이 없어요</span></div>
+{% else %}
+<form method="post" action="{{ url_for('rate') }}" style="display:flex;flex-direction:column;gap:14px">
+  <input type="hidden" name="meal" value="{{ tab }}">
+
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <label class="field" for="sid">학번</label>
+    <input class="input {{ 'bad' if errors.sid }}" id="sid" name="sid" inputmode="numeric" maxlength="5" placeholder="10203" value="{{ form.sid }}" required>
+    {% if errors.sid %}<p class="error">{{ errors.sid }}</p>{% endif %}
+  </div>
+
+  <div class="card" style="padding:8px 14px;gap:0">
+    {% for menu in meal[tab]["메뉴"] %}
+      {% set i = loop.index0 %}
+      <div class="rate-row">
+        <span style="font-size:15px">{{ menu }}</span>
+        <div class="stars" role="radiogroup" aria-label="{{ menu }} 별점">
+          {% for n in [5, 4, 3, 2, 1] %}
+            <input type="radio" id="s{{ i }}_{{ n }}" name="score{{ i }}" value="{{ n }}" {{ 'checked' if form.scores.get(menu) == n }}>
+            <label for="s{{ i }}_{{ n }}" aria-label="{{ n }}점">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+    <span class="muted" style="font-size:12px;padding:8px 0 4px">밥, 김치처럼 평가 안 할 메뉴는 그냥 넘어가도 돼요</span>
+  </div>
+  {% if errors.scores %}<p class="error">{{ errors.scores }}</p>{% endif %}
+
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;justify-content:space-between">
+      <label class="field" for="comment">한 줄 평</label>
+      <span class="count" id="count">0/{{ max_comment }}</span>
+    </div>
+    <input class="input {{ 'bad' if errors.comment }}" id="comment" name="comment" placeholder="돈육버섯볶음 양이 많아서 좋았어요" value="{{ form.comment }}">
+    <p class="error" id="comment-error" {% if not errors.comment %}hidden{% endif %}>{{ errors.comment }}</p>
+  </div>
+
+  <button class="btn primary" type="submit">저장하기</button>
+</form>
+
+<script>
+  const box = document.getElementById("comment");
+  const count = document.getElementById("count");
+  const err = document.getElementById("comment-error");
+  const MAX = {{ max_comment }};
+  function update() {
+    const n = box.value.length;
+    count.textContent = n + "/" + MAX;
+    const bad = n > MAX;
+    count.classList.toggle("bad", bad);
+    box.classList.toggle("bad", bad);
+    if (bad) { err.textContent = "한 줄 평은 " + MAX + "자 이내로 입력해 주세요 (현재 " + n + "자)"; err.hidden = false; }
+    else if (err.textContent.includes("자 이내")) { err.hidden = true; }
+  }
+  box.addEventListener("input", update);
+  update();
+</script>
+{% endif %}
+{% endblock %}
